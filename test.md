@@ -30,3 +30,27 @@ count(eval(status>=500)) AS errors, count AS total
 5. index=auth action=success
 |stats earliest(_time) as first_seen by user src_ip
 |where first_seen >= relative_time(now(),"-1d@d")
+
+
+
+```
+-- Splunk to Dynatrace Query Migration - Clean DQL Query
+-- Generated using Claude 3.5 Sonnet via AWS Bedrock
+-- ==========================================================
+
+fetch logs
+| filter source == "tradexml" and contains(content, "Process is up and running")
+| parse content, "date and time:(?<HealthCheckTS>.*)"
+| fieldsAdd healthCheckEpoch = toTimestamp(HealthCheckTS, "yyyy-MM-dd HH:mm:ss.SSS")
+| fieldsAdd secondsSinceLastHC = round((now() - healthCheckEpoch) / 1000, 0)
+| fieldsAdd status = case(
+    secondsSinceLastHC > 120, "ERROR",
+    secondsSinceLastHC > 65 and secondsSinceLastHC <= 120, "Warning",
+    "OK"
+  )
+| fields host, HealthCheckTS, secondsSinceLastHC, status
+| sort secondsSinceLastHC, host
+| summarize by host
+| fieldsRename Server = host
+
+```
