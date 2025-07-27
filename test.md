@@ -1,4 +1,6 @@
-1.index=trade sourcetype=tradexml " Process is up and running" | rex max_match=1 "date and time:(?<HealthCheckTS>.*)"
+Convert SPL to DQL
+```
+index=trade sourcetype=tradexml " Process is up and running" | rex max_match=1 "date and time:(?<HealthCheckTS>.*)"
 | eval healthCheckEpoch = strptime(HealthCheckTS,"%Y-%m-%d %H:%M:%S.%3N")
 | eval secondsSinceLastHC = round(now()-healthCheckEpoch,0)
 | eval status=case(secondsSinceLastHC>120,"ERROR",secondsSinceLastHC>65 AND secondsSinceLastHC<=120,"Warning",secondsSinceLastHC<=65,"OK")
@@ -6,7 +8,20 @@
 | sort secondsSinceLastHC,host
 | dedup host
 | rename host as Server
- 
+```
+
+Converted DQL is
+
+```
+fetch logs
+| filter contains( content, "Process is up and running") and matchesPhrase(log.source, "blabalblaxml")
+| parse content, """LD time('YYYY-MM-dd HH:mm:ss.SSS'):HealthCheckTS"""
+| fieldsAdd  secondsSinceLastHC = ( unixSecondsFromTimestamp(now()) - unixSecondsFromTimestamp(HealthCheckTS))
+| fieldsAdd status = if(secondsSinceLastHC >120, "Error ",else:if(secondsSinceLastHC >65, " Warining", else: "ok"))  
+| fieldsKeep  host,HealthCheckTS,secondsSinceLastHC,status
+| dedup host
+| fieldsRename server = host
+ ```
  
 2. index=auth (action=success OR action=failure)
 |stats count(eval(action="success")) as success_count,
