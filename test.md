@@ -1,4 +1,7 @@
 Convert SPL to DQL
+
+Here is the SPL and 
+
 ```
 index=trade sourcetype=tradexml " Process is up and running" | rex max_match=1 "date and time:(?<HealthCheckTS>.*)"
 | eval healthCheckEpoch = strptime(HealthCheckTS,"%Y-%m-%d %H:%M:%S.%3N")
