@@ -1,4 +1,4 @@
-Convert SPL to DQL
+1. Convert SPL to DQL
 
 Here is the SPL and 
 
@@ -25,13 +25,26 @@ fetch logs
 | dedup host
 | fieldsRename server = host
  ```
- 
-2. index=auth (action=success OR action=failure)
-|stats count(eval(action="success")) as success_count,
-count(eval(action="failure")) as fail_count by host
+2. Convert SPL to DQL
+
+Here is the SPL and 
+
+ ```
+index=auth (action=success OR action=failure)
+|stats count(eval(action="success")) as success_count,count(eval(action="failure")) as fail_count by host
 |eval login_ratio=round(success_count/(fail_count + 1), 2)
 |where login_ratio < 1
- 
+```
+
+Converted DQL is
+ ```
+fetch logs
+| filter  matchesPhrase(log.source, "auth")
+| parse content, """TIMESTAMP ' ' 'user=' WORD:user ' ' 'action=' WORD:action"""
+| summarize {success_count = countIf(action == "success"),fail_count = countIf(action == "failure") }, by:{user}
+| fieldsAdd login_ratio =round((success_count/(fail_count+1)), decimals:2) 
+| filter login_ratio >1
+```
  
 3. index=auth action=success
 |fields user _time
