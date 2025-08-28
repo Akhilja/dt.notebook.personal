@@ -68,3 +68,15 @@ try {
 }
 
 ```
+
+
+```bash
+ TOKEN=$(curl -s -X POST "https://sso.dynatrace.com/sso/oauth2/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=client_credentials" \
+  -d "client_id=dt0s02.DAFW6AVJ" \
+  -d "client_secret=dt0s02.DAFW6AVJ.VGQQVRNDURWTQKDLY6TVDSDUTMT432VTRUJG3TKW7UUMNZOWTSJOMPFQJDGHQXQY" \
+  -d "scope=storage:files:read storage:files:write storage:files:delete" \
+  -d "resource=urn:dtaccount:30af6f9a-9fd9-4da3-9bf6-b3321b331a64"\
+   | jq -r '.access_token')
+```
